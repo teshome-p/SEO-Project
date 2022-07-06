@@ -1,10 +1,16 @@
-from pyyoutube import Api
-import pprint
-the_api_key = "AIzaSyBmiAPKcX6M0KrzQkQ8ak0RtzV2Uu87rck"
-api = Api(api_key=the_api_key)
-channel_by_id = api.get_channel_info(channel_id="UC_x5XG1OV2P6uZZ5FSM9Ttw")
-print(channel_by_id.items[0].to_dict()["snippet"]["description"])
-#ct_by_channel = api.get_comment_threads(channel_id="UC_x5XG1OV2P6uZZ5FSM9Ttw", count=2)
-#print(ct_by_channel)
-r = api.get_activities_by_channel(channel_id="UC_x5XG1OV2P6uZZ5FSM9Ttw", count=2)
-print(r.items[0].to_dict()["snippet"]["description"])
+import requests
+import pandas
+import sqlalchemy as db
+zip_code = input("Enter a zip code")
+f = requests.get("https://api.weatherapi.com/v1/forecast.json?key=23d8c98898dc4ac8b87213201223006&q=" + zip_code)
+f = f.json()
+for i in range(24):
+  cond = f["forecast"]["forecastday"][0]["hour"][i]["condition"]
+  text = cond["text"]
+  f["forecast"]["forecastday"][0]["hour"][i]["condition"] = text
+data = f["forecast"]["forecastday"][0]["hour"]
+df = pandas.DataFrame.from_dict(data)
+engine = db.create_engine('sqlite:///data_base_name.db')
+df.to_sql('Hourly', con=engine, if_exists='replace', index=False)
+query_result = engine.execute("SELECT * FROM Hourly;").fetchall()
+print(pandas.DataFrame(query_result))
